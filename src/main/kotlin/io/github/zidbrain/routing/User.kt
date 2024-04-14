@@ -24,15 +24,23 @@ fun Routing.user() = route("/user") {
             )
         }
         get("/search") {
+            val info = getAuthenticatedDeviceInfo()
             val searchString = call.request.queryParameters["searchString"]
-            val users = searchString?.let { search -> userService.searchUsers(search).map { it.toDto() } } ?: emptyList()
+            val users =
+                searchString?.let { search -> userService.searchUsersFor(info.userId, search).map { it.toDto() } }
+                    ?: emptyList()
             call.respond(GetContactsResponseDto(users))
         }
-        post("/addContact/{contactId}") {
-            val contactId = call.parameters["contactId"]!!
+        post("/contacts/add") {
+            val contactId = call.request.queryParameters["contactId"]!!
             val info = getAuthenticatedDeviceInfo()
             userService.addContact(info.userId, contactId)
-            call.respond(HttpStatusCode.Created)
+            call.respond(HttpStatusCode.NoContent)
+        }
+        post("/contacts/remove") { request: DeleteContactsRequestDto ->
+            val info = getAuthenticatedDeviceInfo()
+            userService.removeContacts(info.userId, request.contactsIds)
+            call.respond(HttpStatusCode.NoContent)
         }
     }
 }
@@ -48,3 +56,6 @@ private fun User.toDto() = UserDto(
     email = email,
     displayName = displayName
 )
+
+@Serializable
+private data class DeleteContactsRequestDto(val contactsIds: List<String>)

@@ -5,10 +5,11 @@ import io.github.zidbrain.tables.ContactTable
 import io.github.zidbrain.tables.UserDao
 import io.github.zidbrain.tables.UserTable
 import io.github.zidbrain.util.toUUID
-import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.like
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.or
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
 
@@ -24,8 +25,11 @@ class UserService(private val database: Database) {
         }
     }
 
-    fun searchUsers(searchString: String, limit: Int = 10): List<User> = transaction(database) {
-        UserDao.find((UserTable.email like "${searchString}%") or (UserTable.displayName like "${searchString}%"))
+    fun searchUsersFor(userId: String, searchString: String, limit: Int = 10): List<User> = transaction(database) {
+        UserDao.find(
+            ((UserTable.email like "${searchString}%") or (UserTable.displayName like "${searchString}%"))
+                    and (UserTable.id neq userId.toUUID())
+        )
             .limit(limit)
             .map {
                 User(it.id.value.toString(), it.email, it.displayName)
@@ -36,6 +40,13 @@ class UserService(private val database: Database) {
         ContactTable.insert {
             it[userId] = forUserId.toUUID()
             it[this.contactUserId] = contactUserId.toUUID()
+        }
+    }
+
+    fun removeContacts(forUserId: String, contacts: List<String>) = transaction(database) {
+        val contactsIds = contacts.map { it.toUUID() }
+        ContactTable.deleteWhere {
+            (userId eq forUserId.toUUID()) and (this.contactUserId inList contactsIds)
         }
     }
 }
