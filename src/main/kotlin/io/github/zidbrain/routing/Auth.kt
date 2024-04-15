@@ -1,8 +1,9 @@
 package io.github.zidbrain.routing
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
-import io.github.zidbrain.service.TokenService
 import io.github.zidbrain.service.AuthService
+import io.github.zidbrain.service.TokenService
+import io.github.zidbrain.service.model.UserRefreshTokenInfo
 import io.ktor.server.application.*
 import io.ktor.server.plugins.*
 import io.ktor.server.response.*
@@ -20,8 +21,8 @@ fun Routing.auth() {
             val token = verifier.verify(request.idToken)?.payload
                 ?: throw BadRequestException("Failed to get payload from token")
 
-            val refreshToken = authService.getOrCreateRefreshToken(token.email, request.devicePublicKey)
-            call.respond(GetRefreshTokenResponseDto(refreshToken))
+            val userInfo = authService.getOrCreateRefreshToken(token.email, request.devicePublicKey)
+            call.respond(userInfo.toDto())
         }
         post("/getAccessToken") { request: GetAccessTokenRequestDto ->
             val token = tokenService.issueAccessToken(request.refreshToken)
@@ -34,10 +35,12 @@ fun Routing.auth() {
 private data class GetRefreshTokenRequestDto(val idToken: String, val devicePublicKey: String)
 
 @Serializable
-private data class GetRefreshTokenResponseDto(val refreshToken: String)
+private data class GetRefreshTokenResponseDto(val refreshToken: String, val userId: String)
 
 @Serializable
 private data class GetAccessTokenRequestDto(val refreshToken: String)
 
 @Serializable
 private data class GetAccessTokenResponseDto(val accessToken: String)
+
+private fun UserRefreshTokenInfo.toDto() = GetRefreshTokenResponseDto(refreshToken, userId)

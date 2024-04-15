@@ -1,5 +1,6 @@
 package io.github.zidbrain.service
 
+import io.github.zidbrain.service.model.UserRefreshTokenInfo
 import io.github.zidbrain.tables.DeviceDao
 import io.github.zidbrain.tables.UserDao
 import io.github.zidbrain.tables.UserTable
@@ -24,14 +25,16 @@ class AuthService(private val database: Database, private val tokenService: Toke
         if (device != null && device.user != user)
             throw BadRequestException("Device registered to a different user")
 
-        return@transaction device?.refreshToken?.let { token ->
-            token.takeIf { tokenService.verifyRefreshToken(token, user.id.value.toString(), devicePublicKey) }
+        val userId = user.id.value.toString()
+        val refreshToken = device?.refreshToken?.let { token ->
+            token.takeIf { tokenService.verifyRefreshToken(token, userId, devicePublicKey) }
         } ?: run {
             DeviceDao.new(devicePublicKey) {
                 this.user = user
-                this.refreshToken = tokenService.issueRefreshToken(user.id.value.toString(), devicePublicKey)
+                this.refreshToken = tokenService.issueRefreshToken(userId, devicePublicKey)
                 this.lastOnline = OffsetDateTime.now()
             }.refreshToken
         }
+        return@transaction UserRefreshTokenInfo(refreshToken, userId)
     }
 }
