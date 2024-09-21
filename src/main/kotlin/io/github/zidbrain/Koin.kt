@@ -5,10 +5,7 @@ import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import io.github.zidbrain.service.AuthService
-import io.github.zidbrain.service.SecretService
-import io.github.zidbrain.service.TokenService
-import io.github.zidbrain.service.UserService
+import io.github.zidbrain.service.*
 import io.ktor.server.application.*
 import org.jetbrains.exposed.sql.Database
 import org.koin.core.module.dsl.singleOf
@@ -49,4 +46,6 @@ private val appModule = module {
     singleOf(::AuthService)
     singleOf(::SecretService)
     singleOf(::UserService)
+    singleOf(::ConversationService)
+    singleOf(::ChatService)
 }

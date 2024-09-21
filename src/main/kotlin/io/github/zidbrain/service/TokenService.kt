@@ -3,6 +3,8 @@ package io.github.zidbrain.service
 import com.auth0.jwt.JWT
 import com.auth0.jwt.JWTCreator
 import com.auth0.jwt.algorithms.Algorithm
+import com.auth0.jwt.exceptions.JWTVerificationException
+import io.github.zidbrain.service.model.SessionInfo
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import java.time.OffsetDateTime
@@ -24,16 +26,16 @@ class TokenService(secretService: SecretService) {
         .withAudience(aud)
         .withIssuer(jwtDomain)
 
-    fun issueRefreshToken(userId: String, devicePublicKey: String): String = jwtBuilder
+    fun issueRefreshToken(userId: String, deviceId: String): String = jwtBuilder
         .withClaim("userId", userId)
-        .withClaim("devicePublicKey", devicePublicKey)
+        .withClaim("deviceId", deviceId)
         .withAudience("refresh")
         .sign()
 
-    fun verifyRefreshToken(token: String, userId: String, devicePublicKey: String): Boolean {
+    fun verifyRefreshToken(token: String, userId: String, deviceId: String): Boolean {
         val verifier = jwtVerifier("refresh")
             .withClaim("userId", userId)
-            .withClaim("devicePublicKey", devicePublicKey)
+            .withClaim("deviceId", deviceId)
             .build()
         return try {
             verifier.verify(token)
@@ -44,14 +46,21 @@ class TokenService(secretService: SecretService) {
         }
     }
 
-    fun issueAccessToken(refreshToken: String): String {
-        val verifier = jwtVerifier("refresh")
-            .build()
-        val parsedToken = verifier.verify(refreshToken)
+    fun decodeRefreshToken(token: String): SessionInfo? {
+        val verifier = jwtVerifier("refresh").build()
+        return try {
+            val jwt = verifier.verify(token)
+            SessionInfo(jwt.getClaim("userId").asString(), jwt.getClaim("deviceId").asString())
+        } catch (ex: JWTVerificationException) {
+            null
+        }
+    }
+
+    fun issueAccessToken(info: SessionInfo): String {
         return jwtBuilder
             .withAudience("access")
-            .withClaim("userId", parsedToken.getClaim("userId").asString())
-            .withClaim("devicePublicKey", parsedToken.getClaim("devicePublicKey").asString())
+            .withClaim("userId", info.userId)
+            .withClaim("deviceId", info.deviceId)
             .withExpiresAt(OffsetDateTime.now().plusHours(2).toInstant())
             .sign()
     }
@@ -60,7 +69,19 @@ class TokenService(secretService: SecretService) {
         jwt {
             realm = jwtRealm
             verifier(jwtVerifier("access").build())
-            validate { JWTPrincipal(it.payload) }
+            validate {
+                SessionInfo(it["userId"]!!, it["deviceId"]!!)
+            }
+        }
+    }
+
+    fun verifyAccessToken(token: String): SessionInfo? {
+        val verifier = jwtVerifier("access").build()
+        return try {
+            val jwt = verifier.verify(token)
+            SessionInfo(jwt.getClaim("userId").asString(), jwt.getClaim("deviceId").asString())
+        } catch (ex: JWTVerificationException) {
+            null
         }
     }
 }

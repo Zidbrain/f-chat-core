@@ -1,6 +1,7 @@
 package io.github.zidbrain.routing
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
+import io.github.zidbrain.exception.UnauthorizedException
 import io.github.zidbrain.service.AuthService
 import io.github.zidbrain.service.TokenService
 import io.github.zidbrain.service.model.UserRefreshTokenInfo
@@ -10,7 +11,6 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
-
 
 fun Routing.auth() {
     val verifier by inject<GoogleIdTokenVerifier>()
@@ -25,7 +25,10 @@ fun Routing.auth() {
             call.respond(userInfo.toDto())
         }
         post("/getAccessToken") { request: GetAccessTokenRequestDto ->
-            val token = tokenService.issueAccessToken(request.refreshToken)
+            val info = tokenService.decodeRefreshToken(request.refreshToken) ?: throw UnauthorizedException("Refresh token is wrong or expired")
+            if (!authService.verifyDeviceInfo(info.userId, info.deviceId)) throw UnauthorizedException("Unable to verify device id")
+
+            val token = tokenService.issueAccessToken(info)
             call.respond(GetAccessTokenResponseDto(token))
         }
     }
