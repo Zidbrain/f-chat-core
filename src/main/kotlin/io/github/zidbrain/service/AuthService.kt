@@ -10,9 +10,11 @@ import io.github.zidbrain.util.toUUID
 import io.ktor.server.plugins.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.koin.core.annotation.Single
 import java.time.OffsetDateTime
 import java.util.*
 
+@Single
 class AuthService(
     private val database: Database,
     private val tokenService: TokenService

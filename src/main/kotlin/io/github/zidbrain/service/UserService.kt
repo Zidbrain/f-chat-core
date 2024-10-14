@@ -10,8 +10,10 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.like
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.koin.core.annotation.Single
 import java.util.*
 
+@Single
 class UserService(private val database: Database) {
 
     fun getContactsFor(userId: String): List<User> = transaction(database) {

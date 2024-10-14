@@ -1,6 +1,5 @@
 package io.github.zidbrain.model
 
-import io.github.zidbrain.routing.WebSocketMessageIn
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -36,10 +35,3 @@ data class Message(
         return result
     }
 }
-
-fun WebSocketMessageIn.RequestPayload.Message.toModel(
-    conversationId: UUID,
-    senderDeviceId: UUID,
-    received: Boolean
-): Message =
-    Message(message.encodeToByteArray(), conversationId, OffsetDateTime.now(), received, false, senderDeviceId)

@@ -7,8 +7,10 @@ import com.auth0.jwt.exceptions.JWTVerificationException
 import io.github.zidbrain.service.model.SessionInfo
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
+import org.koin.core.annotation.Single
 import java.time.OffsetDateTime
 
+@Single
 class TokenService(secretService: SecretService) {
 
     private val jwtDomain = "https://zidbrain.github.io/"

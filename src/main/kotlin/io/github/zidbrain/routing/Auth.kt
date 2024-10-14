@@ -1,27 +1,24 @@
 package io.github.zidbrain.routing
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
 import io.github.zidbrain.exception.UnauthorizedException
 import io.github.zidbrain.service.AuthService
+import io.github.zidbrain.service.IdTokenParser
 import io.github.zidbrain.service.TokenService
 import io.github.zidbrain.service.model.UserRefreshTokenInfo
 import io.ktor.server.application.*
-import io.ktor.server.plugins.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 
 fun Routing.auth() {
-    val verifier by inject<GoogleIdTokenVerifier>()
+    val tokenParser by inject<IdTokenParser>()
     val authService by inject<AuthService>()
     val tokenService by inject<TokenService>()
     route("/auth") {
         post("/getRefreshToken") { request: GetRefreshTokenRequestDto ->
-            val token = verifier.verify(request.idToken)?.payload
-                ?: throw BadRequestException("Failed to get payload from token")
-
-            val userInfo = authService.getOrCreateRefreshToken(token.email, request.devicePublicKey)
+            val email = tokenParser.parseToken(request.idToken)
+            val userInfo = authService.getOrCreateRefreshToken(email, request.devicePublicKey)
             call.respond(userInfo.toDto())
         }
         post("/getAccessToken") { request: GetAccessTokenRequestDto ->
@@ -35,15 +32,15 @@ fun Routing.auth() {
 }
 
 @Serializable
-private data class GetRefreshTokenRequestDto(val idToken: String, val devicePublicKey: String)
+data class GetRefreshTokenRequestDto(val idToken: String, val devicePublicKey: String)
 
 @Serializable
-private data class GetRefreshTokenResponseDto(val refreshToken: String, val userId: String)
+data class GetRefreshTokenResponseDto(val refreshToken: String, val userId: String)
 
 @Serializable
-private data class GetAccessTokenRequestDto(val refreshToken: String)
+data class GetAccessTokenRequestDto(val refreshToken: String)
 
 @Serializable
-private data class GetAccessTokenResponseDto(val accessToken: String)
+data class GetAccessTokenResponseDto(val accessToken: String)
 
 private fun UserRefreshTokenInfo.toDto() = GetRefreshTokenResponseDto(refreshToken, userId)

@@ -1,8 +1,8 @@
 package io.github.zidbrain.service
 
+import io.github.zidbrain.dto.CreateConversationRequest
 import io.github.zidbrain.model.ConversationForUser
 import io.github.zidbrain.model.toModel
-import io.github.zidbrain.routing.CreateConversationRequest
 import io.github.zidbrain.tables.ConversationEntity
 import io.github.zidbrain.tables.DeviceConversationTable
 import io.github.zidbrain.tables.DeviceEntity
@@ -13,7 +13,9 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.koin.core.annotation.Single
 
+@Single
 class ConversationService(private val database: Database) {
 
     fun createConversation(requestedByDeviceId: String, request: CreateConversationRequest): String =
