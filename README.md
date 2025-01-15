@@ -4,11 +4,11 @@ To launch the service create secrets.json in src/main/resources with the followi
 ```json
 {
   "jwtSecret": "<JWT Secret>",
-  "googleAppId": "<Google application id from google cloud console>"
+  "googleAppId": "<Google application id from the google cloud console>"
 }
 ```
 Then run:
 ```shell
-./gradlew jibDockerBuild # This create a docker image for the service
+./gradlew jibDockerBuild # This creates a docker image for the service
 docker-compose up -d
 ```
