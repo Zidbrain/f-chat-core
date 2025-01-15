@@ -10,7 +10,6 @@ import io.ktor.server.application.*
 import org.jetbrains.exposed.sql.Database
 import org.koin.core.KoinApplication
 import org.koin.core.annotation.ComponentScan
-import org.koin.core.annotation.Factory
 import org.koin.core.annotation.Module
 import org.koin.core.annotation.Single
 import org.koin.ksp.generated.module
@@ -39,10 +38,10 @@ private fun connect(user: String, password: String): DataSource {
 
 @Module
 class DatabaseModule {
-    @Factory
+    @Single
     fun dataSource(): DataSource = connect("postgres", "")
 
-    @Factory
+    @Single
     fun database(dataSource: DataSource): Database = Database.connect(dataSource)
 }
 

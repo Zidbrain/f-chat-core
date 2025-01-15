@@ -1,17 +1,10 @@
 package io.github.zidbrain.service.base
 
-import com.github.dockerjava.api.DockerClient
-import com.github.dockerjava.api.command.CreateContainerResponse
-import com.github.dockerjava.api.model.HostConfig
-import com.github.dockerjava.api.model.PortBinding
-import com.github.dockerjava.core.DefaultDockerClientConfig
-import com.github.dockerjava.core.DockerClientBuilder
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
+import io.github.zidbrain.AppModule
 import io.github.zidbrain.configureApplication
-import io.github.zidbrain.configureKoin
-import io.github.zidbrain.routing.GetAccessTokenRequestDto
-import io.github.zidbrain.routing.GetAccessTokenResponseDto
-import io.github.zidbrain.routing.GetRefreshTokenRequestDto
-import io.github.zidbrain.routing.GetRefreshTokenResponseDto
+import io.github.zidbrain.routing.*
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -21,49 +14,92 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.testing.*
+import io.mockk.mockkClass
 import kotlinx.serialization.json.Json
+import org.flywaydb.core.Flyway
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.Transaction
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.junit.jupiter.api.Order
+import org.junit.jupiter.api.extension.RegisterExtension
+import org.koin.dsl.bind
+import org.koin.dsl.module
 import org.koin.ksp.generated.module
 import org.koin.test.KoinTest
-import kotlin.test.AfterTest
+import org.koin.test.get
+import org.koin.test.inject
+import org.koin.test.junit5.KoinTestExtension
+import org.koin.test.junit5.mock.MockProviderExtension
+import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.junit.jupiter.Container
+import org.testcontainers.junit.jupiter.Testcontainers
+import javax.sql.DataSource
 import kotlin.test.BeforeTest
 
+@Testcontainers
 abstract class EndToEndTest : KoinTest {
-    private lateinit var dockerClient: DockerClient
-    private lateinit var container: CreateContainerResponse
     lateinit var testClient: HttpClient
+
+    private val database: Database by inject()
+
+    open fun setupMocks() {}
 
     @BeforeTest
     fun setup() {
-        val config = DefaultDockerClientConfig.createDefaultConfigBuilder()
-            .withDockerHost("tcp://localhost:2375")
-            .build()
-        dockerClient = DockerClientBuilder.getInstance(config).build()
-        container = dockerClient.createContainerCmd("postgres:16")
-            .withName("test-db")
-            .withEnv("POSTGRES_DB=fchat", "POSTGRES_PASSWORD=123")
-            .withHostConfig(HostConfig.newHostConfig().withPortBindings(PortBinding.parse("5433:5432")))
-            .exec()
-        dockerClient.startContainerCmd(container.id).exec()
+        val dataSource = get<DataSource>()
+
+        Flyway.configure()
+            .dataSource(dataSource)
+            .baselineOnMigrate(true)
+            .load()
+            .migrate()
     }
 
-    @AfterTest
-    fun after() {
-        try {
-            dockerClient.removeContainerCmd(container.id)
-                .withForce(true)
-                .withRemoveVolumes(true)
-                .exec()
-        } catch (_: Exception) {
-        }
+    @JvmField
+    @RegisterExtension
+    @Order(1)
+    val koinExtension = KoinTestExtension.create {
+        allowOverride(true)
+        modules(
+            listOf(
+                AppModule().module,
+                TestModule().module,
+                module {
+                    factory {
+                        val config = HikariConfig().apply {
+                            jdbcUrl = postgres.jdbcUrl
+                            username = "postgres"
+                            password = "123"
+                        }
+                        HikariDataSource(config)
+                    } bind DataSource::class
+                }
+            )
+        )
+        setupMocks()
+    }
+
+    @JvmField
+    @RegisterExtension
+    @Order(0)
+    val mockProviderExtension = MockProviderExtension.create {
+        mockkClass(type = it, relaxUnitFun = true)
+    }
+
+    @Container
+    @JvmField
+    val postgres: PostgreSQLContainer<*> = PostgreSQLContainer("postgres:16")
+        .withDatabaseName("fchat")
+        .withUsername("postgres")
+        .withPassword("123")
+
+    protected fun withDatabase(block: Transaction.() -> Unit) = transaction(database) {
+        block()
     }
 
     protected fun testApplication(builder: suspend ApplicationTestBuilder.() -> Unit) =
         io.ktor.server.testing.testApplication {
             application {
-                configureKoin {
-                    allowOverride(true)
-                    modules(TestModule().module)
-                }
                 configureApplication()
             }
             testClient = createClient {
@@ -74,6 +110,7 @@ abstract class EndToEndTest : KoinTest {
                     contentConverter = KotlinxWebsocketSerializationConverter(Json)
                 }
             }
+            startApplication()
             builder()
         }
 
@@ -88,8 +125,10 @@ abstract class EndToEndTest : KoinTest {
             contentType(ContentType.Application.Json)
             setBody(
                 GetRefreshTokenRequestDto(
-                    idToken = email,
-                    devicePublicKey = devicePublicKey
+                    GetRefreshTokenRequestDtoData.GoogleSSO(
+                        idToken = email,
+                        devicePublicKey = devicePublicKey,
+                    )
                 )
             )
         }.body<GetRefreshTokenResponseDto>()

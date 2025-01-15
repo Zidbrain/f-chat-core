@@ -38,6 +38,10 @@ ksp {
     arg("KOIN_CONFIG_CHECK","true")
 }
 
+tasks.test {
+    useJUnitPlatform()
+}
+
 dependencies {
     // koin
     implementation(platform(libs.koin.bom))
@@ -81,9 +85,12 @@ dependencies {
     // tests
     testImplementation(libs.ktor.test)
     testImplementation(libs.koin.test)
+    testImplementation(libs.koin.test.junit5)
     testImplementation(libs.mockk)
-    testImplementation(libs.kotlin.test)
-    testImplementation(libs.docker.java)
+    testImplementation(kotlin("test"))
     testImplementation(libs.ktor.client.content.negotiation)
     testImplementation(libs.ktor.client.serialiazation)
+    testImplementation(platform(libs.testcontainers.bom))
+    testImplementation(libs.testcontainers.postgresql)
+    testImplementation(libs.testcontainers.junit)
 }

@@ -149,7 +149,8 @@ ALTER TABLE public.message_status OWNER TO postgres;
 CREATE TABLE public."user" (
     id uuid NOT NULL,
     user_email character varying NOT NULL,
-    user_display_name character varying NOT NULL
+    user_display_name character varying NOT NULL,
+    CONSTRAINT user__email_check CHECK ((lower((user_email)::text) = (user_email)::text))
 );
 
 

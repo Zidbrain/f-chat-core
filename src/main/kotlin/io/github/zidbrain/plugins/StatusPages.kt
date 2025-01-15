@@ -19,7 +19,7 @@ fun Application.configureStatusPages() {
                     cause.message.orEmpty(),
                 )
 
-                is BadRequestException -> call.respond(HttpStatusCode.BadRequest)
+                is BadRequestException -> call.respond(HttpStatusCode.BadRequest, cause.message ?: "")
                 is NotFoundException -> call.respond(HttpStatusCode.NotFound, cause.message ?: "")
                 else -> {
                     call.respondText(text = "500: $cause", status = HttpStatusCode.InternalServerError)

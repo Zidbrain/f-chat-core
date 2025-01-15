@@ -18,4 +18,5 @@ class UserEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     var displayName by UserTable.displayName
     var contacts by UserEntity.via(ContactTable.userId, ContactTable.contactUserId)
     val devices by DeviceEntity referrersOn DeviceTable.userId
+    val passwordLogin by UserPasswordLoginEntity optionalBackReferencedOn UserPasswordLogin.id
 }

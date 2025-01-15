@@ -6,8 +6,7 @@ import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.UUIDTable
 import java.util.*
 
-object ConversationTable : UUIDTable("conversation") {
-}
+object ConversationTable : UUIDTable("conversation")
 
 class ConversationEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     companion object : UUIDEntityClass<ConversationEntity>(ConversationTable)

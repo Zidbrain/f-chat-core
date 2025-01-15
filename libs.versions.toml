@@ -1,18 +1,19 @@
 [versions]
-koin = "4.0.0"
-exposed = "0.55.0"
-logback = "1.5.9"
-mockk = "1.13.13"
+koin = "4.1.0-Beta1"
+exposed = "0.58.0"
+logback = "1.5.16"
+mockk = "1.13.16"
 ktor = "2.3.12"
-kotlin = "2.0.21"
-koin-annotations = "1.4.0-RC4"
+kotlin = "2.1.0"
+koin-annotations = "2.0.0-Beta2"
+testcontainers = "1.20.4"
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
 versions = { id = "com.github.ben-manes.versions", version = "0.51.0" }
-ksp = { id = "com.google.devtools.ksp", version = "2.0.21-1.0.25" }
+ksp = { id = "com.google.devtools.ksp", version = "2.1.0-1.0.29" }
 
 [libraries]
 # koin
@@ -20,17 +21,18 @@ koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin" }
 koin-core = { module = "io.insert-koin:koin-core" }
 koin-ktor = { module = "io.insert-koin:koin-ktor"}
 koin-test = { module = "io.insert-koin:koin-test" }
+koin-test-junit5 = { module = "io.insert-koin:koin-test-junit5" }
 koin-logger-slf4j = { module = "io.insert-koin:koin-logger-slf4j"}
 koin-annotations-bom = { module = "io.insert-koin:koin-annotations-bom", version.ref = "koin-annotations" }
 koin-annotations = { module = "io.insert-koin:koin-annotations"}
 koin-annotations-ksp-compiler = { module = "io.insert-koin:koin-ksp-compiler", version.ref = "koin-annotations" }
 
-google-api-client = "com.google.api-client:google-api-client:2.7.0"
+google-api-client = "com.google.api-client:google-api-client:2.7.1"
 
 # db
-hikaricp = "com.zaxxer:HikariCP:6.0.0"
-postgresql = "org.postgresql:postgresql:42.7.4"
-flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql", version = "10.19.0" }
+hikaricp = "com.zaxxer:HikariCP:6.2.1"
+postgresql = "org.postgresql:postgresql:42.7.5"
+flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql", version = "11.1.1" }
 
 # exposed
 exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
@@ -60,5 +62,6 @@ logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "lo
 
 # test
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
-kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
-docker-java = { module = "com.github.docker-java:docker-java", version = "3.4.0" }
+testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
+testcontainers-junit = { module = "org.testcontainers:junit-jupiter" }
+testcontainers-postgresql = { module = "org.testcontainers:postgresql" }
