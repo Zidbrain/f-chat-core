@@ -42,6 +42,11 @@ fun Routing.user() = route("/user") {
             userService.removeContacts(info.userId, request.contactsIds)
             call.respond(HttpStatusCode.NoContent)
         }
+        get("/{userId}") {
+            val id = call.parameters["userId"]!!
+            val user = userService.getUserInfo(id)
+            call.respond(user.toDto())
+        }
     }
 }
 
@@ -49,9 +54,9 @@ fun Routing.user() = route("/user") {
 private data class GetContactsResponseDto(val users: List<UserDto>)
 
 @Serializable
-private data class UserDto(val id: String, val email: String, val displayName: String)
+data class UserDto(val id: String, val email: String, val displayName: String)
 
-private fun User.toDto() = UserDto(
+fun User.toDto() = UserDto(
     id = id,
     email = email,
     displayName = displayName

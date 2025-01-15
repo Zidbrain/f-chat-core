@@ -1,9 +1,8 @@
 package io.github.zidbrain.service
 
 import io.github.zidbrain.model.User
-import io.github.zidbrain.tables.ContactTable
-import io.github.zidbrain.tables.UserDao
-import io.github.zidbrain.tables.UserTable
+import io.github.zidbrain.model.toModel
+import io.github.zidbrain.tables.*
 import io.github.zidbrain.util.toUUID
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -11,12 +10,14 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.like
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.koin.core.annotation.Single
 import java.util.*
 
+@Single
 class UserService(private val database: Database) {
 
     fun getContactsFor(userId: String): List<User> = transaction(database) {
-        UserDao.findById(UUID.fromString(userId))!!.contacts.map {
+        UserEntity.findById(UUID.fromString(userId))!!.contacts.map {
             User(
                 id = it.id.value.toString(),
                 email = it.email,
@@ -26,7 +27,7 @@ class UserService(private val database: Database) {
     }
 
     fun searchUsersFor(userId: String, searchString: String, limit: Int = 10): List<User> = transaction(database) {
-        UserDao.find(
+        UserEntity.find(
             ((UserTable.email like "${searchString}%") or (UserTable.displayName like "${searchString}%"))
                     and (UserTable.id neq userId.toUUID())
         )
@@ -48,5 +49,14 @@ class UserService(private val database: Database) {
         ContactTable.deleteWhere {
             (userId eq forUserId.toUUID()) and (this.contactUserId inList contactsIds)
         }
+    }
+
+    fun getDevices(forUsers: List<String>) = transaction(database) {
+        DeviceEntity.find { DeviceTable.userId inList forUsers.map { it.toUUID() } }.mapLazy { it.toModel() }
+            .toList()
+    }
+
+    fun getUserInfo(userId: String) = transaction(database) {
+        UserEntity[userId.toUUID()].toModel()
     }
 }

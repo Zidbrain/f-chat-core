@@ -11,11 +11,11 @@ object UserTable : UUIDTable("user") {
     val displayName = varchar("user_display_name", 25)
 }
 
-class UserDao(id: EntityID<UUID>) : UUIDEntity(id) {
-    companion object : UUIDEntityClass<UserDao>(UserTable)
+class UserEntity(id: EntityID<UUID>) : UUIDEntity(id) {
+    companion object : UUIDEntityClass<UserEntity>(UserTable)
 
     var email by UserTable.email
     var displayName by UserTable.displayName
-    var contacts by UserDao.via(ContactTable.userId, ContactTable.contactUserId)
-    val devices by DeviceDao referrersOn DeviceTable.userId
+    var contacts by UserEntity.via(ContactTable.userId, ContactTable.contactUserId)
+    val devices by DeviceEntity referrersOn DeviceTable.userId
 }
