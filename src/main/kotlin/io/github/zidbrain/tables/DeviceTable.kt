@@ -12,6 +12,7 @@ object DeviceTable : UUIDTable("device") {
     val userId = reference("user_id", UserTable)
     val refreshToken = varchar("device_refresh_token", 2048)
     val lastOnline = timestampWithTimeZone("device_last_online")
+    val fcmToken = varchar("fcm_token", 255).nullable()
 }
 
 class DeviceEntity(id: EntityID<UUID>) : UUIDEntity(id) {
@@ -22,4 +23,5 @@ class DeviceEntity(id: EntityID<UUID>) : UUIDEntity(id) {
     var refreshToken by DeviceTable.refreshToken
     var lastOnline by DeviceTable.lastOnline
     var conversations by ConversationEntity via DeviceConversationTable
+    var fcmToken by DeviceTable.fcmToken
 }

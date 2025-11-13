@@ -36,4 +36,4 @@ out/
 ### VS Code ###
 .vscode/
 
-secrets.json
+src/resources/secrets/

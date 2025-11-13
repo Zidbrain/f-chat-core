@@ -1,12 +1,12 @@
 package io.github.zidbrain.model
 
-import java.time.OffsetDateTime
 import java.util.*
+import kotlin.time.Instant
 
 data class Message(
     val content: ByteArray,
     val conversationId: UUID,
-    val sentAt: OffsetDateTime,
+    val sentAt: Instant,
     val received: Boolean,
     val read: Boolean,
     val senderDeviceId: UUID

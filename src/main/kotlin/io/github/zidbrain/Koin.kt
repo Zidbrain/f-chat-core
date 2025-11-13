@@ -16,6 +16,7 @@ import org.koin.ksp.generated.module
 import org.koin.ktor.plugin.koin
 import org.koin.logger.slf4jLogger
 import javax.sql.DataSource
+import kotlin.time.Clock
 
 fun Application.configureKoin(additionalConfiguration: KoinApplication.() -> Unit = {}) {
     koin {
@@ -56,4 +57,7 @@ class AppModule {
         )
             .setAudience(listOf(secretService.getSecret("googleAppId")))
             .build()
+
+    @Single
+    fun clock(): Clock = Clock.System
 }

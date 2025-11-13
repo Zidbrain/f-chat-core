@@ -15,7 +15,8 @@ import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.testing.*
 import io.mockk.mockkClass
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.protobuf.ProtoBuf
 import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.Transaction
@@ -97,6 +98,7 @@ abstract class EndToEndTest : KoinTest {
         block()
     }
 
+    @OptIn(ExperimentalSerializationApi::class)
     protected fun testApplication(builder: suspend ApplicationTestBuilder.() -> Unit) =
         io.ktor.server.testing.testApplication {
             application {
@@ -107,7 +109,7 @@ abstract class EndToEndTest : KoinTest {
                     json()
                 }
                 install(WebSockets) {
-                    contentConverter = KotlinxWebsocketSerializationConverter(Json)
+                    contentConverter = KotlinxWebsocketSerializationConverter(ProtoBuf)
                 }
             }
             startApplication()

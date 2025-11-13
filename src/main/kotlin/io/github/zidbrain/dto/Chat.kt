@@ -5,11 +5,13 @@ package io.github.zidbrain.dto
 import io.github.zidbrain.model.Device
 import io.github.zidbrain.routing.UserDto
 import io.github.zidbrain.util.OffsetDateTimeSerializer
+import kotlinx.datetime.serializers.FormattedInstantSerializer
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonClassDiscriminator
 import java.time.OffsetDateTime
+import kotlin.time.Instant
 
 @Serializable
 data class GetActiveDevicesRequest(val users: List<String>)
@@ -85,8 +87,7 @@ sealed class ChatSocketMessageOutContent {
             val message: String,
             val senderId: String,
             val conversationId: String,
-            @Serializable(with = OffsetDateTimeSerializer::class)
-            val sentAt: OffsetDateTime,
+            val sentAt: Instant,
         ) : Payload()
     }
 

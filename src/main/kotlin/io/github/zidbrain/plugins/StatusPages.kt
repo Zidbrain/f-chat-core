@@ -11,6 +11,9 @@ import io.ktor.server.response.*
 
 fun Application.configureStatusPages() {
     install(StatusPages) {
+        status(HttpStatusCode.NotFound) {
+            call.respondText("404: Page Not Found", status = it)
+        }
         exception<Throwable> { call, cause ->
             logError(call, cause)
             when (cause) {

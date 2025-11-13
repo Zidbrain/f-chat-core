@@ -7,7 +7,6 @@ import io.github.zidbrain.service.TokenService
 import io.github.zidbrain.service.UserService
 import io.github.zidbrain.service.model.SessionInfo
 import io.github.zidbrain.util.getAuthenticatedDeviceInfo
-import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.plugins.*
 import io.ktor.server.response.*

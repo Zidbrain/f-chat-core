@@ -1,13 +1,10 @@
-repositories {
-    mavenCentral()
-}
-
 plugins {
     alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.ktor)
+    alias(ktorLibs.plugins.ktor)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.versions)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.jib)
 }
 
 group = "com.github.zidbrain"
@@ -28,14 +25,30 @@ configurations.all {
 
 ktor {
     docker {
-        jreVersion.set(JavaVersion.VERSION_21)
+        jreVersion.set(JavaVersion.VERSION_23)
         localImageName.set("fchat")
         imageTag.set("1.0")
     }
 }
 
+jib {
+    from {
+        image = "eclipse-temurin:23-jre"
+    }
+    to {
+        image = "fchat"
+        tags = setOf("1.0")
+    }
+}
+
 ksp {
-    arg("KOIN_CONFIG_CHECK","true")
+    arg("KOIN_CONFIG_CHECK", "true")
+}
+
+kotlin {
+    compilerOptions {
+        optIn.add("kotlin.time.ExperimentalTime")
+    }
 }
 
 tasks.test {
@@ -54,6 +67,9 @@ dependencies {
 
     implementation(libs.google.api.client)
 
+    // firebase
+    implementation(libs.firebase.admin)
+
     // db
     implementation(libs.hikaricp)
     implementation(libs.postgresql)
@@ -68,29 +84,31 @@ dependencies {
     implementation(libs.exposed.java.time)
 
     // ktor
-    implementation(platform(libs.ktor.bom))
-    implementation(libs.ktor.server.status.pages)
-    implementation(libs.ktor.server.core)
-    implementation(libs.ktor.server.websockets)
-    implementation(libs.ktor.serialization)
-    implementation(libs.ktor.content.negotiation)
-    implementation(libs.ktor.call.logging)
-    implementation(libs.ktor.auth)
-    implementation(libs.ktor.auth.jwt)
-    implementation(libs.ktor.netty)
+    implementation(ktorLibs.server.statusPages)
+    implementation(ktorLibs.server.core)
+    implementation(ktorLibs.server.websockets)
+    implementation(ktorLibs.serialization.kotlinx.json)
+    implementation(ktorLibs.serialization.kotlinx.protobuf)
+    implementation(ktorLibs.server.contentNegotiation)
+    implementation(ktorLibs.server.callLogging)
+    implementation(ktorLibs.server.auth.jwt)
+    implementation(ktorLibs.server.netty)
 
     implementation(libs.h2)
     implementation(libs.logback.classic)
 
+    implementation(libs.kotlinx.datetime)
+    implementation(libs.kotlinx.serialization.core)
+
     // tests
-    testImplementation(libs.ktor.test)
+    testImplementation(ktorLibs.server.testHost)
     testImplementation(libs.koin.test)
     testImplementation(libs.koin.test.junit5)
     testImplementation(libs.mockk)
     testImplementation(kotlin("test"))
-    testImplementation(libs.ktor.client.content.negotiation)
-    testImplementation(libs.ktor.client.serialiazation)
+    testImplementation(ktorLibs.client.contentNegotiation)
     testImplementation(platform(libs.testcontainers.bom))
     testImplementation(libs.testcontainers.postgresql)
     testImplementation(libs.testcontainers.junit)
+    testImplementation(libs.coroutines.debug)
 }

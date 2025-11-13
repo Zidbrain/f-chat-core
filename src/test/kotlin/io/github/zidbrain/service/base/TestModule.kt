@@ -5,6 +5,8 @@ import io.github.zidbrain.service.SecretService
 import org.koin.core.annotation.ComponentScan
 import org.koin.core.annotation.Module
 import org.koin.core.annotation.Single
+import java.io.FileInputStream
+import java.io.InputStream
 
 @Module
 @ComponentScan
@@ -13,6 +15,7 @@ class TestModule {
     @Single
     fun secretService(): SecretService = object : SecretService {
         override fun getSecret(secret: String): String = secret
+        override fun getSecretFile(filename: String): InputStream = FileInputStream.nullInputStream()
     }
 
     @Single

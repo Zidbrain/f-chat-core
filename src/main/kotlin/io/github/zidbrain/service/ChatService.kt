@@ -9,6 +9,7 @@ import io.github.zidbrain.util.idString
 import io.github.zidbrain.util.toUUID
 import io.ktor.server.plugins.*
 import io.ktor.server.websocket.*
+import io.ktor.util.logging.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.ClosedSendChannelException
@@ -16,11 +17,16 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.mapLazy
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.koin.core.annotation.Single
-import java.time.OffsetDateTime
 import java.util.*
+import kotlin.time.Clock
 
 @Single
-class ChatService(private val database: Database) {
+class ChatService(
+    private val database: Database,
+    private val fcmService: FCMService,
+    private val clock: Clock
+) {
+    private val logger = KtorSimpleLogger(this::class.qualifiedName!!)
 
     private val sessions = mutableMapOf<String, WebSocketServerSession>()
 
@@ -93,7 +99,7 @@ class ChatService(private val database: Database) {
             message = message,
             senderId = senderId,
             conversationId = conversationId,
-            sentAt = OffsetDateTime.now()
+            sentAt = clock.now()
         )
 
     private fun getDevicesForConversation(conversationId: String, senderDeviceId: String): List<String> =
@@ -110,11 +116,16 @@ class ChatService(private val database: Database) {
         senderId: String,
         externalMessageId: String,
         message: ChatSocketMessageInContent.Payload.CreateMessageRequest
-    ) {
-        trySendTo(
-            deviceIds = toDevices,
-            message = message.toOutMessage(senderId, externalMessageId)
-        )
+    ): Unit = coroutineScope {
+        val outMessage = message.toOutMessage(senderId, externalMessageId)
+        launch {
+            trySendTo(
+                deviceIds = toDevices,
+                message = outMessage
+            )
+        }
+
+        launch { fcmService.sendNotificationToDevices(toDevices, outMessage) }
     }
 
     private suspend fun WebSocketServerSession.receiveMessage(userId: String, deviceId: String) {
@@ -168,8 +179,10 @@ class ChatService(private val database: Database) {
                 session.receiveMessage(userId, deviceId)
             }
         } catch (ex: Exception) {
-            if (ex !is ClosedReceiveChannelException && ex !is ClosedSendChannelException)
+            if (ex !is ClosedReceiveChannelException && ex !is ClosedSendChannelException) {
+                logger.error("Session dropped because of: $ex")
                 throw ex
+            }
         } finally {
             closeDeviceConnection(deviceId)
         }

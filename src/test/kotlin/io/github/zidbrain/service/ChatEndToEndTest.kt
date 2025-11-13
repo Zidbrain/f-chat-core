@@ -10,11 +10,16 @@ import io.ktor.http.*
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import org.koin.test.mock.declareMock
 import kotlin.test.*
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class ChatEndToEndTest : EndToEndTest() {
+
+    override fun setupMocks() {
+        declareMock<FCMService>()
+    }
 
     private suspend fun TestUser.createConversation(withUsers: List<TestUser>): CreateConversationResponse {
         val devices = testClient.post("/chat/getActiveDevices") {
@@ -45,7 +50,7 @@ class ChatEndToEndTest : EndToEndTest() {
 
     @OptIn(ExperimentalUuidApi::class)
     @Test
-    fun `two users can connect and send each other messages while both are online`() = testApplication {
+    fun `two users can connect and send each other messages while both are online`(): Unit = testApplication {
         val user1 = createUserAndLogIn("test@abc.com", "key1")
         val user2 = createUserAndLogIn("test1@abc.com", "key2")
 
